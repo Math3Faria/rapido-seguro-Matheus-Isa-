@@ -12,29 +12,40 @@ const clienteModel = {
     try {
       await connection.beginTransaction();
 
-      const sqlCliente = "INSERT INTO clientes (nome, cpf, email) VALUES (?, ?, ?);";
+      const sqlCliente =
+        "INSERT INTO clientes (nome, cpf, email) VALUES (?, ?, ?);";
       const valuesCliente = [pNome, pCpf, pEmail];
       const [rowsCliente] = await connection.query(sqlCliente, valuesCliente);
+
       const idCliente = rowsCliente.insertId;
 
       if (pTelefones && pTelefones.length > 0) {
         for (const telefone of pTelefones) {
-          const sqlTelefone = "INSERT INTO telefones (id_cliente, numero) VALUES (?, ?);";
-          const valuesTelefone = [idCliente, telefone];
-          await connection.query(sqlTelefone, valuesTelefone);
+          const sqlTelefone =
+            "INSERT INTO telefones (idCliente, numero) VALUES (?, ?);";
+          await connection.query(sqlTelefone, [idCliente, telefone]);
         }
       }
 
       if (pEnderecos && pEnderecos.length > 0) {
         for (const endereco of pEnderecos) {
-          const sqlEndereco = `INSERT INTO enderecos (logradouro, numero, bairro, complemento, cidade, estado, cep, id_cliente,) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
-          const valuesEndereco = [pLogradouro,pNumero,pBairro,pComplemento,pCidade,pEstado, pCep, pIdCliente];
+
+          const sqlEndereco = `
+            INSERT INTO enderecos
+            (idCliente, logradouro, numero, bairro, complemento, cidade, estado, cep)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+          `;
+
+          const valuesEndereco = [idCliente,endereco.logradouro,endereco.numero,endereco.bairro,endereco.complemento,endereco.cidade,endereco.estado, endereco.cep
+          ];
+
           await connection.query(sqlEndereco, valuesEndereco);
         }
       }
 
       await connection.commit();
       return rowsCliente;
+
     } catch (error) {
       await connection.rollback();
       throw error;
