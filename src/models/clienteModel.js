@@ -12,7 +12,7 @@ const clienteModel = {
     const [rows] = await pool.query(sql);
     return rows;
   },
-  insert: async (pNomeCliente, pCpfCliente) => {
+  insertCliente: async (pNomeCliente, pCpfCliente) => {
     const sql =
       "insert into clientes (nome_cliente, cpf_cliente) values (?,?);";
     const values = [pNomeCliente, pCpfCliente];
@@ -20,14 +20,14 @@ const clienteModel = {
     return rows;
   },
 
-  update: async (pId, pNomeCliente, pCpf) => {
+  updateCliente: async (pId, pNomeCliente, pCpf) => {
     const sql =
       "update clientes set nome_cliente=?, cpf_cliente=? where id_cliente=?;";
     const values = [pNomeCliente, pCpf, pId];
     const [rows] = await pool.query(sql, values);
     return rows;
   },
-  delete: async (pId) => {
+  deleteCliente: async (pId) => {
     const sql = "delete from clientes where id_cliente = ?;";
     const values = [pId];
     const [rows] = await pool.query(sql, values);
@@ -94,17 +94,10 @@ const clienteModel = {
 
     try {
       await connection.beginTransaction();
-
-
       await connection.query("delete from Telefones where idCliente = ?;", [idCliente]);
-
-
       await connection.query("delete from Enderecos where idCliente = ?;", [idCliente]);
-
-
       const sqlCliente = "delete from Clientes where idCliente = ?;";
       const [resultCliente] = await connection.query(sqlCliente, [idCliente]);
-
       await connection.commit();
       return resultCliente;
 
