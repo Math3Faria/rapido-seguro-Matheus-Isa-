@@ -1,50 +1,112 @@
 const { pool } = require("../config/db");
 
 const clienteModel = {
-  selectAll: async () => {
-    const sql = "SELECT * FROM clientes;";
+  selecionaCliente: async () => {
+    const sql = "select * FROM clientes;";
     const [rows] = await pool.query(sql);
     return rows;
   },
+  selectById: async (pId) => {
+    const sql = "select * FROM clientes;";
+    const values = [pId];
+    const [rows] = await pool.query(sql);
+    return rows;
+  },
+  insert: async (pNomeCliente, pCpfCliente) => {
+    const sql =
+      "insert into clientes (nome_cliente, cpf_cliente) values (?,?);";
+    const values = [pNomeCliente, pCpfCliente];
+    const [rows] = await pool.query(sql, values);
+    return rows;
+  },
 
-  insertCliente: async (pNome, pCpf, pEmail, pTelefones, pEnderecos) => {
+  update: async (pId, pNomeCliente, pCpf) => {
+    const sql =
+      "update clientes set nome_cliente=?, cpf_cliente=? where id_cliente=?;";
+    const values = [pNomeCliente, pCpf, pId];
+    const [rows] = await pool.query(sql, values);
+    return rows;
+  },
+  delete: async (pId) => {
+    const sql = "delete from clientes where id_cliente = ?;";
+    const values = [pId];
+    const [rows] = await pool.query(sql, values);
+    return rows;
+  },
+  updateCliente: async (idCliente, novoNome, novoCpf, novoEmail, telefones, enderecosCompletos) => {
     const connection = await pool.getConnection();
+
     try {
       await connection.beginTransaction();
 
-      const sqlCliente =
-        "INSERT INTO clientes (nome, cpf, email) VALUES (?, ?, ?);";
-      const valuesCliente = [pNome, pCpf, pEmail];
-      const [rowsCliente] = await connection.query(sqlCliente, valuesCliente);
+      const sqlUpdateCliente = "update Clientes set nome = ?, cpf = ?, email = ? where idCliente = ?;";
+      const [resultCliente] = await connection.query(sqlUpdateCliente, [novoNome, novoCpf, novoEmail, idCliente]);
 
-      const idCliente = rowsCliente.insertId;
+      if (telefones) {
+        await connection.query("delete from Telefones where idCliente = ?;", [idCliente]);
 
-      if (pTelefones && pTelefones.length > 0) {
-        for (const telefone of pTelefones) {
-          const sqlTelefone =
-            "INSERT INTO telefones (idCliente, numero) VALUES (?, ?);";
-          await connection.query(sqlTelefone, [idCliente, telefone]);
+        if (telefones.length > 0) {
+          const sqlTelefones = "insert into Telefones (numero, idCliente) values ?";
+          const valuesTelefones = telefones.map(tel => [tel.numero, idCliente]);
+          await connection.query(sqlTelefones, [valuesTelefones]);
         }
       }
 
-      if (pEnderecos && pEnderecos.length > 0) {
-        for (const endereco of pEnderecos) {
+      if (enderecosCompletos) {
+        const idsEnderecosPresentes = enderecosCompletos.filter(e => e.idEndereço).map(e => e.idEndereço);
 
-          const sqlEndereco = `
-            INSERT INTO enderecos
-            (idCliente, logradouro, numero, bairro, complemento, cidade, estado, cep)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-          `;
+        if (idsEnderecosPresentes.length > 0) {
+             const sqlDelete = `delete from Enderecos where idCliente = ? and idEndereço not in (?)`;
+             await connection.query(sqlDelete, [idCliente, idsEnderecosPresentes]);
+        } else {
+             await connection.query("delete from Enderecos where idCliente = ?;", [idCliente]);
+        }
 
-          const valuesEndereco = [idCliente,endereco.logradouro,endereco.numero,endereco.bairro,endereco.complemento,endereco.cidade,endereco.estado, endereco.cep
-          ];
+        for (const end of enderecosCompletos) {
+          if (end.idEndereço) {
 
-          await connection.query(sqlEndereco, valuesEndereco);
+            const sqlUpdate = `update Enderecos set logradouro=?, numero=?, bairro=?, complemento=?, cidade=?, estado=?, cep=? where idEndereço=? and idCliente=?`;
+            const updateValues = [end.logradouro, end.numero, end.bairro, end.complemento, end.cidade, end.estado, end.cep, end.idEndereço, idCliente];
+            await connection.query(sqlUpdate, updateValues);
+          } else {
+ 
+            const sqlInsert = `insert into Enderecos (idCliente, logradouro, numero, bairro, complemento, cidade, estado, cep) values (?, ?, ?, ?, ?, ?, ?, ?);`;
+            const insertValues = [idCliente, end.logradouro, end.numero, end.bairro, end.complemento, end.cidade, end.estado, end.cep];
+            await connection.query(sqlInsert, insertValues);
+          }
         }
       }
 
       await connection.commit();
-      return rowsCliente;
+      return resultCliente;
+
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
+
+
+  deleteCliente: async (idCliente) => {
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+
+      await connection.query("delete from Telefones where idCliente = ?;", [idCliente]);
+
+
+      await connection.query("delete from Enderecos where idCliente = ?;", [idCliente]);
+
+
+      const sqlCliente = "delete from Clientes where idCliente = ?;";
+      const [resultCliente] = await connection.query(sqlCliente, [idCliente]);
+
+      await connection.commit();
+      return resultCliente;
 
     } catch (error) {
       await connection.rollback();
