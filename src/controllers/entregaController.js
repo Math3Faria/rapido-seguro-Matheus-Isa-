@@ -176,7 +176,7 @@ const entregaController = {
             res.status(500).json({message: "Erro interno do servidor durante a exclusão.", errorMessage: error.message,
             });
         }
-    },
+    },  
 
 };
 

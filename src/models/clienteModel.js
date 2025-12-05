@@ -12,17 +12,17 @@ const clienteModel = {
     const [rows] = await pool.query(sql);
     return rows;
   },
-  insertCliente: async (pNomeCliente, pCpfCliente) => {
+  insertCliente: async (pNomeCliente, pCpfCliente, pEmailCliente) => {
     const sql =
-      "insert into clientes (nome_cliente, cpf_cliente) values (?,?);";
-    const values = [pNomeCliente, pCpfCliente];
+      "insert into clientes (nome, cpf, email) values (?, ?, ?);";
+    const values = [pNomeCliente, pCpfCliente, pEmailCliente];
     const [rows] = await pool.query(sql, values);
     return rows;
   },
 
   updateCliente: async (pId, pNomeCliente, pCpf) => {
     const sql =
-      "update clientes set nome_cliente=?, cpf_cliente=? where id_cliente=?;";
+      "update clientes set nome=?, cpf=? where id_cliente=?;";
     const values = [pNomeCliente, pCpf, pId];
     const [rows] = await pool.query(sql, values);
     return rows;
