@@ -40,9 +40,7 @@ const clienteController = {
       return res.status(200).json({ message: "Dados da tabela clientes", data: resultado });
     } catch (error) {
       console.error(error);
-      res.status(500).json({
-        message: "Erro interno do servidor",
-        errorMessage: error.message,
+      res.status(500).json({message: "Erro interno do servidor",errorMessage: error.message,
       });
     }
   },
@@ -52,8 +50,7 @@ const clienteController = {
       const { nome, cpf, email, telefones, enderecos } = req.body;
 
       if (!nome || !cpf || !email || !telefones || !enderecos) {
-        return res.status(400).json({
-          message: "Confira se escreveu tudo corretamente, esta faltando algo.",
+        return res.status(400).json({message: "Confira se escreveu tudo corretamente, esta faltando algo.",
         });
       }
 
@@ -74,9 +71,7 @@ const clienteController = {
 
       const resultado = await clienteModel.insertCliente(nome, cpf, email, telefones, enderecosCompletos);
 
-      res.status(201).json({
-        message: "O cliente foi cadastrado",
-        clienteId: resultado.insertId,
+      res.status(201).json({message: "O cliente foi cadastrado",clienteId: resultado.insertId,
       });
     } catch (error) {
       console.error(error);
@@ -88,8 +83,7 @@ const clienteController = {
       const idCliente = Number(req.params.idCliente);
 
       if (!idCliente || !Number.isInteger(idCliente)) {
-        return res.status(400).json({
-          message: "O id esta errado. Diga um id existente e tente novamente",
+        return res.status(400).json({message: "O id esta errado. Diga um id existente e tente novamente",
         });
       }
 
@@ -100,8 +94,7 @@ const clienteController = {
       const resultado = await clienteModel.deleteCliente(idCliente);
 
       if (resultado.affectedRows === 0) {
-        return res.status(500).json({
-          message: "Não é possivel excluir o cliente. Ele tem um pedido criado?",
+        return res.status(500).json({message: "Não é possivel excluir o cliente. Ele tem um pedido criado?",
         });
       }
 
@@ -109,13 +102,10 @@ const clienteController = {
     } catch (error) {
       console.error(error);
       if (error.code === "ER_ROW_IS_REFERENCED_2") {
-        return res.status(409).json({
-          message: "Exclua primeiramente os pedidos deste cliente, depois exclua o cliente!",
+        return res.status(409).json({message: "Exclua primeiramente os pedidos deste cliente, depois exclua o cliente!",
         });
       }
-      res.status(500).json({
-        message: "Erro interno do servidor durante a exclusão. 😢",
-        errorMessage: error.message,
+      res.status(500).json({message: "Erro interno do servidor durante a exclusão. 😢",errorMessage: error.message,
       });
     }
   },
@@ -130,8 +120,7 @@ const clienteController = {
         !Number.isInteger(idCliente) ||
         (!nome && !cpf && !email && !telefones && !enderecos)
       ) {
-        return res.status(400).json({
-          message: "Diga o id do cliente corretamente e pelo menos um campo para alterar!",
+        return res.status(400).json({message: "Diga o id do cliente corretamente e pelo menos um campo para alterar!",
         });
       }
 
@@ -190,8 +179,7 @@ const clienteController = {
 
       const resultado = await clienteModel.updateCliente(idCliente, novoNome, novoCpf, novoEmail, telefones, enderecosCompletos);
       if (resultado.affectedRows === 0) {
-        return res.status(200).json({
-          message: "Nada foi alterado nos dados principais do cliente",
+        return res.status(200).json({message: "Nada foi alterado nos dados principais do cliente",
         });
       }
 

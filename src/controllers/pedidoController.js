@@ -5,34 +5,24 @@ const pedidoController = {
     criarPedido: async (req, res) => {
         try {
             const { idCliente, distancia, peso_carga, valorbase_km, valorbase_kg } = req.body;
-
             if (!idCliente || !distancia || !peso_carga || !valorbase_km || !valorbase_kg) {
                 return res.status(400).json({ message: "Dados obrigatórios incompletos." });
             }
             if (distancia <= 0 || peso_carga <= 0 || valorbase_km <= 0 || valorbase_kg <= 0) {
                 return res.status(400).json({ message: "Os números tem que ser positivos." });
             }
-            const resultado = await pedidoModel.insertPedido(
-                idCliente,
-                distancia,
-                peso_carga,
-                valorbase_km,
-                valorbase_kg
+            const resultado = await pedidoModel.insertPedido(idCliente,distancia,peso_carga,valorbase_km,valorbase_kg
             );
             if (resultado.affectedRows === 0) {
                  return res.status(500).json({ message: "Erro ao inserir o pedido no banco de dados." });
             }
 
-            res.status(201).json({
-                message: "Pedido criado com sucesso.",
-                idPedido: resultado.insertId
+            res.status(201).json({message: "Pedido criado com sucesso.",idPedido: resultado.insertId
             });
 
         } catch (error) {
             console.error(error);
-            res.status(500).json({ 
-                message: "Ocorreu um erro interno ao criar o pedido.",
-                error: error.message 
+            res.status(500).json({ message: "Ocorreu um erro interno ao criar o pedido.",error: error.message 
             });
         }
     },
@@ -48,49 +38,35 @@ const pedidoController = {
 
         } catch (error) {
             console.error(error);
-            res.status(500).json({
-                message: "Ocorreu um erro interno ao buscar os pedidos.",
-                error: error.message
-            });
+            res.status(500).json({message: "Ocorreu um erro interno ao buscar os pedidos.",error: error.message});
         }
     },
     deletaPedidos: async (req, res) => {
         try {
             const idPedido = Number(req.params.idPedido);
 
-            if (isNaN(idPedido) || idPedido <= 0) {
-                return res.status(400).json({message: "Insira um id de pedido valido",});
+            if (isNaN(idPedido) || idPedido <= 0) {return res.status(400).json({message: "Insira um id de pedido valido",});
             }
 
             const pedidoSelecionado = await pedidoModel.selectPedidoById(idPedido);
 
             if (pedidoSelecionado.length === 0) {
-                return res.status(404).json({ 
-                    message: "O pedido nao foi encontrado no banco de dados",});
+                return res.status(404).json({ message: "O pedido nao foi encontrado no banco de dados",});
             }
             const statusEntrega = pedidoSelecionado[0].status_entrega;
             if (statusEntrega === 'em transito' || statusEntrega === 'entregue') {
-                 return res.status(403).json({
-                    message: `Não da para excluir o pedido. Status atual: ${statusEntrega}.`,});
+                 return res.status(403).json({message: `Não da para excluir o pedido. Status atual: ${statusEntrega}.`,});
             }
             const resultadoDeleteEntrega = await pedidoModel.deleteEntregaByPedidoId(idPedido);
             const resultadoDeletaPedido = await pedidoModel.deletaPedido(idPedido);
 
             if (resultadoDeletaPedido.affectedRows === 0) {
-                return res.status(500).json({
-                    message: "Falha interna ao excluir o pedido.",
-                });
+                return res.status(500).json({message: "Falha interna ao excluir o pedido.",});
             }
 
-            res.status(200).json({
-                message: "Pedido excluído!.",
-                idPedido: idPedido
+            res.status(200).json({message: "Pedido excluído!.",idPedido: idPedido
             });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({
-                message: "Ocorreu um erro no servidor ao tentar deletar o pedido.",
-                errorMessage: error.message || error,
+        } catch (error) {console.error(error);res.status(500).json({message: "Ocorreu um erro no servidor ao tentar deletar o pedido.", errorMessage: error.message || error,
             });
         }
     },
@@ -126,9 +102,7 @@ const pedidoController = {
 
         } catch (error) {
             console.error(error);
-            res.status(500).json({ 
-                message: "Ocorreu um erro no servidor ao tentar atualizar o pedido.", 
-                errorMessage: error.message || error,
+            res.status(500).json({ message: "Ocorreu um erro no servidor ao tentar atualizar o pedido.",errorMessage: error.message || error,
             });
         }
     },
