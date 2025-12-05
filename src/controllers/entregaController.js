@@ -140,7 +140,7 @@ const entregaController = {
         } finally {
             connection.release();
         }
-    },
+    },  
 
 };
 
