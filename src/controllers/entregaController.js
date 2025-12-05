@@ -40,7 +40,8 @@ const entregaController = {
             });
         }
     },
-
+    alteraStatusEntrega: async (req, res) => {
+    }
 
 };
 
