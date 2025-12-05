@@ -65,54 +65,90 @@ const entregaController = {
             });
         }
     },
-    calculosEntrega: async (pIdEntrega) => {
-        const connection = await pool.getConnection();
-    
+    adicionaEntrega: async (req, res) => {
+    try {
+        const { idPedido, tipo_entrega } = req.body;
+
+        if (!idPedido || !tipo_entrega) {
+            return res.status(400).json({message: "Faltando 'idPedido' ou 'tipo_entrega'."});
+        }
+
+        const tiposValidos = ["Normal", "Urgente"];
+        if (!tiposValidos.includes(tipo_entrega)) {
+            return res.status(400).json({message: "O 'tipo_entrega' deve ser 'Normal' ou 'Urgente'."});
+        }
+
+   
+        const resultadoInsert = await entregaModel.insertEntrega(idPedido, tipo_entrega);
+        const novaEntregaId = resultadoInsert.insertId;
+
+        await entregaModel.calculosEntrega(novaEntregaId);
+
+        const entregaFinal = await entregaModel.selectById(novaEntregaId);
+
+        res.status(201).json({
+            message: "Entrega cadastrada e valores calculados com sucesso!",
+            idEntrega: novaEntregaId,
+            dadosCalculados: entregaFinal
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Erro interno ao cadastrar/calcular a entrega. 😭" });
+    }
+    },
+
+    recalculaEntrega: async (req, res) => {
         try {
-            await connection.beginTransaction();
+            const idEntrega = Number(req.params.idEntrega);
 
-            const sqlSelect = `
-                select p.distancia, p.valorbase_km, p.peso_carga, p.valorbase_kg, e.tipo_entrega
-                from Entregas e
-                join Pedidos p on e.idPedido = p.idPedido
-                where e.idEntrega = ?;
-            `;
-            
-            const [rows] = await connection.query(sqlSelect, [pIdEntrega]);
-            
-            if (rows.length === 0) {
-                throw new Error('Entrega não encontrada.');
+            if (!idEntrega || !Number.isInteger(idEntrega)) {
+                return res.status(400).json({message: "ID de entrega inválido. Informe um número inteiro.",
+                });
             }
-    
-            const data = rows[0];
 
-            const valorDistancia = data.distancia * data.valorbase_km;
-            const valorPeso = data.peso_carga * data.valorbase_kg;
-            const valorBase = valorDistancia + valorPeso;
-    
-            const acrescimo = data.tipo_entrega === 'Urgente' ? valorBase * 0.20 : 0.00;
-            const valorComAcrescimo = valorBase + acrescimo;
-            
-            const desconto = valorComAcrescimo > 500.00 ? valorComAcrescimo * 0.10 : 0.00;
-            
-            const taxaExtra = data.peso_carga > 50.00 ? 15.00 : 0.00;
-            
-            const valorFinal = valorComAcrescimo - desconto + taxaExtra;
-    
+            const entregaExistente = await entregaModel.selectById(idEntrega);
+            if (!entregaExistente) {
+                return res.status(404).json({ message: "Entrega não encontrada para recalcular." });
+            }
 
-            const sqlUpdate = `
-                update Entregas
-                set valor_distancia = ?, valor_peso = ?, acrescimo = ?, desconto = ?, taxa_extra = ?, valor_final = ?, status_entrega = 'em transito' where idEntrega = ?;`;
-            const values = [valorDistancia, valorPeso, acrescimo, desconto, taxaExtra, valorFinal, pIdEntrega];
-            const [result] = await connection.query(sqlUpdate, values);
-            await connection.commit();
-            return result;
-    
+            await entregaModel.calculosEntrega(idEntrega);
+
+            const entregaRecalculada = await entregaModel.selectById(idEntrega);
+
+            res.status(200).json({ message: `Valores da Entrega ${idEntrega} recalculados com sucesso!,dadosRecalculados: entregaRecalculada` });
         } catch (error) {
-            await connection.rollback();
-            throw error;
-        } finally {
-            connection.release();
+            console.error(error);
+            res.status(500).json({message: "Erro interno do servidor ao recalcular a entrega. 😢", errorMessage: error.message,
+            });
+        }
+    },
+
+    deletaEntrega: async (req, res) => {
+        try {
+            const idEntrega = Number(req.params.idEntrega);
+
+            if (!idEntrega || !Number.isInteger(idEntrega)) {
+                return res.status(400).json({message: "ID de entrega inválido. Informe um número inteiro.",
+                });
+            }
+
+            const entregaSelecionada = await entregaModel.selectById(idEntrega);
+            if (!entregaSelecionada) {
+                return res.status(404).json({ message: "Não foi possível localizar esta entrega." });
+            }
+
+            const resultado = await entregaModel.deleteEntrega(idEntrega);
+
+            if (resultado.affectedRows === 0) {
+                return res.status(500).json({ message: "Falha ao excluir a entrega.", });
+            }
+
+            res.status(200).json({ message: "Entrega excluída com sucesso!" });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({message: "Erro interno do servidor durante a exclusão.", errorMessage: error.message,
+            });
         }
     },
 

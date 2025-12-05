@@ -101,6 +101,14 @@ const entregaModel = {
             connection.release(); 
         }
     },
+
+    deleteEntrega: async (pIdEntrega) => {
+        const sql = "delete from Entregas where idEntrega = ?;";
+        const values = [pIdEntrega];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    }
+
 };
 
 module.exports = { entregaModel };
