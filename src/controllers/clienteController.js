@@ -35,13 +35,9 @@ const clienteController = {
     try {
       const resultado = await clienteModel.selecionaCliente();
       if (resultado.length === 0) {
-        return res
-          .status(200)
-          .json({ message: "A consulta não retornou resultados" });
+        return res.status(200).json({ message: "A consulta não retornou resultados" });
       }
-      return res
-        .status(200)
-        .json({ message: "Dados da tabela clientes", data: resultado });
+      return res.status(200).json({ message: "Dados da tabela clientes", data: resultado });
     } catch (error) {
       console.error(error);
       res.status(500).json({
@@ -73,25 +69,10 @@ const clienteController = {
 
         const dadosCep = resultadoCep.endereco;
 
-        enderecosCompletos.push({
-          cep,
-          numero,
-          complemento: complemento || "",
-          logradouro: dadosCep.logradouro,
-          bairro: dadosCep.bairro,
-          cidade: dadosCep.cidade,
-          estado: dadosCep.uf,
-          ibge: dadosCep.ibge,
-        });
+        enderecosCompletos.push({ cep, numero, complemento: complemento || "", logradouro: dadosCep.logradouro, bairro: dadosCep.bairro, cidade: dadosCep.cidade, estado: dadosCep.uf, ibge: dadosCep.ibge, });
       }
 
-      const resultado = await clienteModel.insertCliente(
-        nome,
-        cpf,
-        email,
-        telefones,
-        enderecosCompletos
-      );
+      const resultado = await clienteModel.insertCliente(nome, cpf, email, telefones, enderecosCompletos);
 
       res.status(201).json({
         message: "O cliente foi cadastrado",
@@ -114,15 +95,14 @@ const clienteController = {
 
       const clienteSelecionado = await clienteModel.selectById(idCliente);
       if (clienteSelecionado.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "Não foi possivel localizar este cliente no banco de dados" });
+        return res.status(404).json({ message: "Não foi possivel localizar este cliente no banco de dados" });
       }
       const resultado = await clienteModel.deleteCliente(idCliente);
 
       if (resultado.affectedRows === 0) {
         return res.status(500).json({
-          message:"Não é possivel excluir o cliente. Ele tem um pedido criado?",});
+          message: "Não é possivel excluir o cliente. Ele tem um pedido criado?",
+        });
       }
 
       res.status(200).json({ message: "Cliente excluído!" });
@@ -151,14 +131,13 @@ const clienteController = {
         (!nome && !cpf && !email && !telefones && !enderecos)
       ) {
         return res.status(400).json({
-          message:"Diga o id do cliente corretamente e pelo menos um campo para alterar!",});
+          message: "Diga o id do cliente corretamente e pelo menos um campo para alterar!",
+        });
       }
 
       const clienteAtual = await clienteModel.selectById(idCliente);
       if (clienteAtual.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "Este cliente não foi encontrado!." });
+        return res.status(404).json({ message: "Este cliente não foi encontrado!." });
       }
 
       const clienteData = clienteAtual[0];
@@ -175,7 +154,7 @@ const clienteController = {
             (c) => c.cpf == cpf && c.idCliente !== idCliente
           );
           if (cpfDuplicado) {
-            return res.status(409).json({message:"Ei, este cpf ja foi cadastrado!",});
+            return res.status(409).json({ message: "Ei, este cpf ja foi cadastrado!", });
           }
         }
 
@@ -184,7 +163,7 @@ const clienteController = {
             (c) => c.email == email && c.idCliente !== idCliente
           );
           if (emailDuplicado) {
-            return res.status(409).json({message:"Este email ja foi cadastrado!",});
+            return res.status(409).json({ message: "Este email ja foi cadastrado!", });
           }
         }
       }
@@ -196,8 +175,7 @@ const clienteController = {
           const idEndereço = endereco.idEndereço;
 
           if (!cep) {
-            return res.status(400).json({
-              message:"O cep é obrigatório tanto para incluir ou alterar endereço!",});
+            return res.status(400).json({ message: "O cep é obrigatório tanto para incluir ou alterar endereço!", });
           }
 
           const resultadoCep = await buscarCep(cep);
@@ -206,20 +184,21 @@ const clienteController = {
           }
 
           const dadosCep = resultadoCep.endereco;
-          enderecosCompletos.push({idEndereço,cep,numero,complemento: complemento || "",logradouro: dadosCep.logradouro,bairro: dadosCep.bairro,cidade: dadosCep.cidade,estado: dadosCep.uf,ibge: dadosCep.ibge,});
+          enderecosCompletos.push({ idEndereço, cep, numero, complemento: complemento || "", logradouro: dadosCep.logradouro, bairro: dadosCep.bairro, cidade: dadosCep.cidade, estado: dadosCep.uf, ibge: dadosCep.ibge, });
         }
       }
 
-      const resultado = await clienteModel.updateCliente(idCliente,novoNome,novoCpf,novoEmail,telefones,enderecosCompletos);
+      const resultado = await clienteModel.updateCliente(idCliente, novoNome, novoCpf, novoEmail, telefones, enderecosCompletos);
       if (resultado.affectedRows === 0) {
         return res.status(200).json({
-          message:"Nada foi alterado nos dados principais do cliente",});
+          message: "Nada foi alterado nos dados principais do cliente",
+        });
       }
 
-      res.status(200).json({message: "O cliente e os dados inseridos foram alterados corretamente!.",});
+      res.status(200).json({ message: "O cliente e os dados inseridos foram alterados corretamente!.", });
     } catch (error) {
       console.error(error);
-      res.status(500).json({message: "Erro interno do servidor durante a alteração. 😞",errorMessage: error.message,});
+      res.status(500).json({ message: "Erro interno do servidor durante a alteração. 😞", errorMessage: error.message, });
     }
   },
 };

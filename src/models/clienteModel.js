@@ -2,12 +2,12 @@ const { pool } = require("../config/db");
 
 const clienteModel = {
   selecionaCliente: async () => {
-    const sql = "select * FROM clientes;";
+    const sql = "select * from clientes;";
     const [rows] = await pool.query(sql);
     return rows;
   },
   selectById: async (pId) => {
-    const sql = "select * FROM clientes;";
+    const sql = "select * from clientes;";
     const values = [pId];
     const [rows] = await pool.query(sql);
     return rows;
