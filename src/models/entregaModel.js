@@ -23,6 +23,15 @@ const entregaModel = {
         const [rows] = await pool.query(sql, [pIdEntrega]);
         return rows.length > 0 ? rows[0] : null; 
     },
+    
+    /**
+     * @description Insere uma nova entrega com status inicial 'calculando'.
+     * @async
+     * @function insertEntrega
+     * @param {number} pIdPedido - O ID do pedido associado.
+     * @param {string} pTipoEntrega - O tipo de entrega ('Normal' ou 'Urgente').
+     * @returns {Promise<Object>} Resultado da inserção.
+     */
     insertEntrega: async (pIdPedido, pTipoEntrega) => {
 
         const sql = `insert into Entregas (valor_distancia, valor_peso, acrescimo, desconto, taxa_extra, valor_final, status_entrega, tipo_entrega, idPedido) values (0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'calculando', ?, ?);`;
@@ -32,7 +41,9 @@ const entregaModel = {
     },
 
     /**
-     * @description atualiza o status da entrega
+     * @description Atualiza o status da entrega.
+     * @async
+     * @function updateStatus
      * @param {number} pIdEntrega - o id da entrega que o status vai ser atualizado
      * @param {string} pStatusEntrega - o novo status
      * @returns {Promise<Object>} o resultado do update
@@ -45,8 +56,8 @@ const entregaModel = {
     },
 
     /**
-     * @description faz os calculos dos valores entrega e atualiza a tabela
-     *  quando acontece uma transaçã muda o status para "em transito"
+     * @description Faz os calculos dos valores entrega e atualiza a tabela.
+     * Quando acontece uma transação muda o status para "em transito".
      * @param {number} pIdEntrega - o id da entrega que os calculos seram feitos
      * @returns {Promise<Object>} o resultado de update e o valor final
      * @throws {Error} se a entrega não for encontrada ocorre um erro 
@@ -104,6 +115,13 @@ const entregaModel = {
         }
     },
 
+    /**
+     * @description Exclui uma entrega pelo ID.
+     * @async
+     * @function deleteEntrega
+     * @param {number} pIdEntrega - ID da entrega a ser excluída.
+     * @returns {Promise<Object>} Resultado da exclusão.
+     */
     deleteEntrega: async (pIdEntrega) => {
         const sql = "delete from Entregas where idEntrega = ?;";
         const values = [pIdEntrega];

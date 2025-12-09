@@ -2,6 +2,11 @@ const { entregaModel } = require("../models/entregaModel");
 
 const entregaController = {
 
+    /**
+     * @description Retorna todas as entregas.
+     * @async
+     * @function selecionaEntrega
+     */
     selecionaEntrega: async (req, res) => {
         try {
             const resultado = await entregaModel.selecionaEntrega();
@@ -16,6 +21,11 @@ const entregaController = {
         }
     },
 
+    /**
+     * @description Retorna uma entrega pelo ID.
+     * @async
+     * @function selectById
+     */
     selectById: async (req, res) => {
         try {
             const idEntrega = Number(req.params.idEntrega);
@@ -37,6 +47,11 @@ const entregaController = {
         }
     },
 
+    /**
+     * @description Adiciona uma nova entrega e calcula os valores.
+     * @async
+     * @function adicionaEntrega
+     */
     adicionaEntrega: async (req, res) => {
         try {
             const { idPedido, tipo_entrega } = req.body;
@@ -65,7 +80,11 @@ const entregaController = {
         }
     },
 
-
+    /**
+     * @description Atualiza o status da entrega (PUT). Permite qualquer status válido.
+     * @async
+     * @function alteraStatusEntrega
+     */
     alteraStatusEntrega: async (req, res) => {
         try {
             const idEntrega = Number(req.params.idEntrega);
@@ -85,45 +104,60 @@ const entregaController = {
             if (resultado.affectedRows === 0) {return res.status(404).json({ message: "Entrega não encontrada ou status já era o mesmo." });
             }
 
-            res.status(200).json({message:  `Status da Entrega ${idEntrega} atualizado para ${status_entrega}`});
+            res.status(200).json({message:  `Status da Entrega ${idEntrega} atualizado para ${status_entrega}`});
         } catch (error) {console.error(error);
             res.status(500).json({message: "Erro interno do servidor ao alterar o status. 😞", errorMessage: error.message,
             });
         }
     },
-    adicionaEntrega: async (req, res) => {
-    try {
-        const { idPedido, tipo_entrega } = req.body;
 
-        if (!idPedido || !tipo_entrega) {
-            return res.status(400).json({message: "Faltando 'idPedido' ou 'tipo_entrega'."});
+    /**
+     * @description Atualiza parcialmente o status da entrega para 'entregue' ou 'cancelado' (PATCH).
+     * @async
+     * @function patchEntrega
+     */
+    patchEntrega: async (req, res) => {
+        try {
+            const idEntrega = Number(req.params.idEntrega);
+            const { status_entrega } = req.body;
+
+            if (!idEntrega || !status_entrega) {
+                return res.status(400).json({ message: "ID da entrega e 'status_entrega' são obrigatórios." });
+            }
+
+            const statusPermitidos = ["entregue", "cancelado"];
+            if (!statusPermitidos.includes(status_entrega)) {
+                return res.status(400).json({ message: `Para esta atualização, o 'status_entrega' deve ser 'entregue' ou 'cancelado'.` });
+            }
+
+            const entregaAtual = await entregaModel.selectById(idEntrega);
+            if (!entregaAtual) {
+                return res.status(404).json({ message: "Entrega não encontrada." });
+            }
+
+            if (entregaAtual.status_entrega !== 'em transito') {
+                 return res.status(400).json({ message: `A entrega precisa estar 'em transito' para ser ${status_entrega}. Status atual: ${entregaAtual.status_entrega}` });
+            }
+
+            const resultado = await entregaModel.updateStatus(idEntrega, status_entrega);
+
+            if (resultado.affectedRows === 0) {
+                 return res.status(500).json({ message: "Falha ao atualizar o status." });
+            }
+
+            res.status(200).json({ message: `Status da Entrega ${idEntrega} atualizado com sucesso para ${status_entrega}.` });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Erro interno do servidor durante o PATCH. 😞", errorMessage: error.message });
         }
-
-        const tiposValidos = ["Normal", "Urgente"];
-        if (!tiposValidos.includes(tipo_entrega)) {
-            return res.status(400).json({message: "O 'tipo_entrega' deve ser 'Normal' ou 'Urgente'."});
-        }
-
-   
-        const resultadoInsert = await entregaModel.insertEntrega(idPedido, tipo_entrega);
-        const novaEntregaId = resultadoInsert.insertId;
-
-        await entregaModel.calculosEntrega(novaEntregaId);
-
-        const entregaFinal = await entregaModel.selectById(novaEntregaId);
-
-        res.status(201).json({
-            message: "Entrega cadastrada e valores calculados com sucesso!",
-            idEntrega: novaEntregaId,
-            dadosCalculados: entregaFinal
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Erro interno ao cadastrar/calcular a entrega. 😭" });
-    }
     },
-
+    
+    /**
+     * @description Recalcula os valores da entrega.
+     * @async
+     * @function recalculaEntrega
+     */
     recalculaEntrega: async (req, res) => {
         try {
             const idEntrega = Number(req.params.idEntrega);
@@ -150,6 +184,11 @@ const entregaController = {
         }
     },
 
+    /**
+     * @description Exclui uma entrega pelo ID.
+     * @async
+     * @function deletaEntrega
+     */
     deletaEntrega: async (req, res) => {
         try {
             const idEntrega = Number(req.params.idEntrega);
@@ -176,7 +215,7 @@ const entregaController = {
             res.status(500).json({message: "Erro interno do servidor durante a exclusão.", errorMessage: error.message,
             });
         }
-    },  
+    }, 
 
 };
 
