@@ -13,6 +13,7 @@ const clienteModel = {
             c.idCliente,
             c.nome,
             c.email,
+            c.cpf,
 
             e.logradouro,
             e.numero as numero_endereco,
