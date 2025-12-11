@@ -128,7 +128,7 @@ const clienteController = {
         } catch (error) {
             console.error(error);
             res.status(500).json({
-                message: "Teve um erro dentro do código😭, verifique se teve algum dado pessoal inserido corretamente(algum valor pode ja existir no banco de dados)."
+                message: "Teve um erro dentro do código😭, verifique se teve algum dado pessoal inserido incorretamente(algum valor pode ja existir no banco de dados)."
             });
         }
     },
